@@ -2,9 +2,9 @@
 
 namespace YUVLib {
 
-	/*static uint32 GetFrameSize(const uint32 width, const uint32 height, const YUVFormats format) {
+	static uint32 GetFrameSize(const uint32 width, const uint32 height, const YUVFormats format) {
 		return width * height * GetBitsCount(format) / 8;
-	}*/
+	}
 
 	YUVReader::~YUVReader() {
 		Close();
@@ -20,7 +20,7 @@ namespace YUVLib {
 		stream.seekg(0, std::ios_base::end);
 		size_t realSize = stream.tellg();
 		stream.seekg(0, std::ios_base::beg);
-		framesCount = realSize / m_width * m_height * GetBitsCount(m_format) / 8;
+		framesCount = realSize / GetFrameSize(m_width, m_height, m_format);
 		return true;
 	}
 
@@ -35,7 +35,7 @@ namespace YUVLib {
 
 	void YUVReader::MoveToFrame(uint32 frameIndex) {
 		if (frameIndex < framesCount) {
-			stream.seekg(frameIndex * m_width * m_height * GetBitsCount(m_format) / 8);
+			stream.seekg(frameIndex * GetFrameSize(m_width, m_height, m_format));
 		}
 	}
 
