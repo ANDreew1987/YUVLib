@@ -24,13 +24,13 @@ namespace YUVLib {
 		uint32 rgbStride = bmp->GetWidth() * bmp->GetPixelSize();
 		uint8 *srcPos, *yPos;
 
-		//������������
+		//
 		const __m256i yc = _mm256_set_epi16(YKOEF, YKOEF, YKOEF, YKOEF);
 		const __m256i uc = _mm256_set_epi16(UKOEF, UKOEF, UKOEF, UKOEF);
 		const __m256i vc = _mm256_set_epi16(VKOEF, VKOEF, VKOEF, VKOEF);
 		const __m256i _128 = _mm256_set1_epi16(128);
 		const __m256i _16 = _mm256_set1_epi16(16);
-		//�����
+		//
 		//10000000 00000000 00000000 00000000
 		const __m128i srcLoadMask = _mm_set1_epi32(0x80000000);
 		//00000000 01000000 00100000 01100000
@@ -114,8 +114,8 @@ namespace YUVLib {
 				//u1 = _mm256_shuffle_epi32(u1, 0x88);
 				//u1 = _mm256_shuffle_epi8(u1, yuvShuffleMask);
 
-				*(uPos) = (unsigned char)_mm256_extract_epi8(u1, 0);
-				*(uPos + 1) = (unsigned char)_mm256_extract_epi8(u1, 16);
+				*(uPos) = (uint8)_mm256_extract_epi8(u1, 0);
+				*(uPos + 1) = (uint8)_mm256_extract_epi8(u1, 16);
 
 				//*(uPos + 1) = u1.m256i_u8[16];
 				//*(uPos + 0) = u1.m256i_u8[0];
@@ -150,8 +150,8 @@ namespace YUVLib {
 				//v1 = _mm256_shuffle_epi32(v1, 0x88);
 				//v1 = _mm256_shuffle_epi8(v1, yuvShuffleMask);
 
-				*vPos = (unsigned char)_mm256_extract_epi8(v1, 0);
-				*(vPos + 1) = (unsigned char)_mm256_extract_epi8(v1, 16);
+				*vPos = (uint8)_mm256_extract_epi8(v1, 0);
+				*(vPos + 1) = (uint8)_mm256_extract_epi8(v1, 16);
 
 				//*(vPos + 1) = v1.m256i_u8[16];
 				//*(vPos + 0) = v1.m256i_u8[0];

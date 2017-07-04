@@ -9,7 +9,7 @@ namespace YUVLib {
 	private:
 		uint32 nProc;
 		std::thread *threads;
-		void threadProc();
+		//void threadProc(Bitmap * bmp, YUVFrame *frame, const uint32 offsetY, const uint32 linesCount);
 	public:
 		YUVAVXMTConverter();
 		YUVFrame* RGBToYUV420(Bitmap *bmp);
