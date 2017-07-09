@@ -1,74 +1,121 @@
-#include "YUVSTDConverter.hpp"
-//#include "YUV420Frame.h"
+#include "Converters/YUVSTDConverter.hpp"
+#include "YUVColorSpaces.hpp"
+
+#define clip(var) ((var>=255)?255:(var<=0)?0:var)
 
 namespace YUVLib {
 
-	YUVFrame* YUVSTDConverter::RGBToYUV420(Bitmap *bmp){
-		if (bmp->GetWidth() % 2 != 0 || bmp->GetHeight() % 2 != 0)
-			return nullptr;
-		YUVFrame *frame = GetFrame(YUVFormats::YUV420);
-		//YUV420Frame *frame = new YUV420Frame();
-		frame->Create(bmp->GetWidth(), bmp->GetHeight());
-		frame->LockChannels();
-		uint8 *currentYLine = frame->GetY();
-		uint8 *uPos         = frame->GetU();
-		uint8 *vPos         = frame->GetV();
-		bmp->LockChannels();
-		uint8 *currentRLine = bmp->GetR();
-		uint8 *currentGLine = bmp->GetG();
-		uint8 *currentBLine = bmp->GetB();
-		uint32 yStride = frame->GetWidth();
-		uint32 rgbStride = yStride;
-		uint8 *rPos, *gPos, *bPos, *yPos;
-		int32 r[2], g[2], b[2], tempY1, tempY2, tempY3, tempY4, tempU, tempV;
-		for (uint32 y = 0; y < frame->GetHeight(); y += 2) {
-			rPos = currentRLine;
-			gPos = currentGLine;
-			bPos = currentBLine;
-			yPos = currentYLine;
-			for (uint32 x = 0; x < frame->GetWidth(); x += 2) {
-				r[0] = *(rPos);
-				r[1] = *(rPos + rgbStride); rPos++;
-				g[0] = *(gPos);
-				g[1] = *(gPos + rgbStride); gPos++;
-				b[0] = *(bPos);
-				b[1] = *(bPos + rgbStride); bPos++;
-				tempY1 = ((66 * r[0] + 129 * g[0] + 25 * b[0] + 128) >> 8) + 16;
-				tempY2 = ((66 * r[1] + 129 * g[1] + 25 * b[1] + 128) >> 8) + 16;
-				tempU = ((-38 * r[0] - 74 * g[0] + 112 * b[0] + 128) >> 8) + 128;
-				tempU += ((-38 * r[1] - 74 * g[1] + 112 * b[1] + 128) >> 8) + 128;
-				tempV = ((112 * r[0] - 94 * g[0] - 18 * b[0] + 128) >> 8) + 128;
-				tempV += ((112 * r[1] - 94 * g[1] - 18 * b[1] + 128) >> 8) + 128;
+	void RGBToYUV420_STD(uint8_t *frame, uint8_t *bmp, const int16_t koeff[][4], const uint32_t width, const uint32_t height, const uint32_t startLine, const uint32_t linesCount) {
+		const uint32_t yStride = width;
+		const uint32_t uStride = width / 2;
+		const uint32_t vStride = width / 2;
+		const uint32_t bmpStride = width * 4;
 
-				r[0] = *(rPos);
-				r[1] = *(rPos + rgbStride); rPos++;
-				g[0] = *(gPos);
-				g[1] = *(gPos + rgbStride); gPos++;
-				b[0] = *(bPos);
-				b[1] = *(bPos + rgbStride); bPos++;
-				tempY3 = ((66 * r[0] + 129 * g[0] + 25 * b[0] + 128) >> 8) + 16;
-				tempY4 = ((66 * r[1] + 129 * g[1] + 25 * b[1] + 128) >> 8) + 16;
-				tempU += ((-38 * r[0] - 74 * g[0] + 112 * b[0] + 128) >> 8) + 128;
-				tempU += ((-38 * r[1] - 74 * g[1] + 112 * b[1] + 128) >> 8) + 128;
-				tempV += ((112 * r[0] - 94 * g[0] - 18 * b[0] + 128) >> 8) + 128;
-				tempV += ((112 * r[1] - 94 * g[1] - 18 * b[1] + 128) >> 8) + 128;
+		uint8_t *yPos = frame + yStride * startLine;
+		uint8_t *uPos = frame + width * height + uStride * startLine / 2;
+		uint8_t *vPos = frame + width * height + width * height / 4 + vStride * startLine / 2;
+		uint8_t *bmpPos = bmp + bmpStride * startLine;
 
-				*(yPos) = (uint8)(tempY1);
-				*(yPos + yStride) = (uint8)(tempY2); yPos++;
-				*(yPos) = (uint8)(tempY3);
-				*(yPos + yStride) = (uint8)(tempY4); yPos++;
-				*uPos = (uint8)(tempU / 4); uPos++;
-				*vPos = (uint8)(tempV / 4); vPos++;
-				
+		int32_t r[2], g[2], b[2], tempY1, tempY2, tempY3, tempY4, tempU, tempV;
+
+		for (uint32_t y = 0; y < linesCount; y += 2) {
+			for (uint32_t x = 0; x < width; x += 2) {
+				b[0] = *(bmpPos);
+				b[1] = *(bmpPos + bmpStride); bmpPos++;
+				g[0] = *(bmpPos);
+				g[1] = *(bmpPos + bmpStride); bmpPos++;
+				r[0] = *(bmpPos);
+				r[1] = *(bmpPos + bmpStride); bmpPos++;
+				bmpPos++;
+				tempY1 = ((koeff[0][0] * r[0] + koeff[0][1] * g[0] + koeff[0][2] * b[0]) >> 8) + koeff[0][3];
+				tempY2 = ((koeff[0][0] * r[1] + koeff[0][1] * g[1] + koeff[0][2] * b[1]) >> 8) + koeff[0][3];
+				tempU =  ((koeff[1][0] * r[0] + koeff[1][1] * g[0] + koeff[1][2] * b[0]) >> 8) + koeff[1][3];
+				tempU += ((koeff[1][0] * r[1] + koeff[1][1] * g[1] + koeff[1][2] * b[1]) >> 8) + koeff[1][3];
+				tempV =  ((koeff[2][0] * r[0] + koeff[2][1] * g[0] + koeff[2][2] * b[0]) >> 8) + koeff[2][3];
+				tempV += ((koeff[2][0] * r[1] + koeff[2][1] * g[1] + koeff[2][2] * b[1]) >> 8) + koeff[2][3];
+
+				b[0] = *(bmpPos);
+				b[1] = *(bmpPos + bmpStride); bmpPos++;
+				g[0] = *(bmpPos);
+				g[1] = *(bmpPos + bmpStride); bmpPos++;
+				r[0] = *(bmpPos);
+				r[1] = *(bmpPos + bmpStride); bmpPos++;
+				bmpPos++;
+				tempY3 = ((koeff[0][0] * r[0] + koeff[0][1] * g[0] + koeff[0][2] * b[0]) >> 8) + koeff[0][3];
+				tempY4 = ((koeff[0][0] * r[1] + koeff[0][1] * g[1] + koeff[0][2] * b[1]) >> 8) + koeff[0][3];
+				tempU += ((koeff[1][0] * r[0] + koeff[1][1] * g[0] + koeff[1][2] * b[0]) >> 8) + koeff[1][3];
+				tempU += ((koeff[1][0] * r[1] + koeff[1][1] * g[1] + koeff[1][2] * b[1]) >> 8) + koeff[1][3];
+				tempV += ((koeff[2][0] * r[0] + koeff[2][1] * g[0] + koeff[2][2] * b[0]) >> 8) + koeff[2][3];
+				tempV += ((koeff[2][0] * r[1] + koeff[2][1] * g[1] + koeff[2][2] * b[1]) >> 8) + koeff[2][3];
+
+				*(yPos          ) = (uint8_t)(tempY1);
+				*(yPos + yStride) = (uint8_t)(tempY2); yPos++;
+				*(yPos          ) = (uint8_t)(tempY3);
+				*(yPos + yStride) = (uint8_t)(tempY4); yPos++;
+				*uPos = (uint8_t)(tempU / 4); uPos++;
+				*vPos = (uint8_t)(tempV / 4); vPos++;
 			}
-			currentRLine += 2 * rgbStride;
-			currentGLine += 2 * rgbStride;
-			currentBLine += 2 * rgbStride;
-			currentYLine += 2 * yStride;
+			yPos += yStride;
+			bmpPos += bmpStride;
 		}
-		bmp->UnlockChannels();
-		frame->UnlockChannels();
-		return frame;
+	}
+
+	void RGBToYUYV422_STD(uint8_t *frame, uint8_t *bmp, const int16_t koeff[][4], const uint32_t width, const uint32_t height, const uint32_t startLine, const uint32_t linesCount) {
+
+	}
+
+	void YUV420ToRGB_STD(uint8_t *frame, uint8_t *bmp, const int16_t koeff[][4], const uint32_t width, const uint32_t height, const uint32_t startLine, const uint32_t linesCount) {
+		const uint32_t yStride = width;
+		const uint32_t uStride = width / 2;
+		const uint32_t vStride = width / 2;
+		const uint32_t bmpStride = width * 4;
+
+		uint8_t *yPos = frame + yStride * startLine;
+		uint8_t *uPos = frame + width * height + uStride * startLine / 2;
+		uint8_t *vPos = frame + width * height + width * height / 4 + vStride * startLine / 2;
+		uint8_t *bmpPos = bmp + bmpStride * startLine;
+
+		int16_t tempY, tempU, tempV;
+
+		for (uint32_t y = 0; y < linesCount; y += 2) {
+			for (uint32_t x = 0; x < width; x += 2) {
+                tempY = *(yPos) - koeff[0][3];
+                tempU = *(uPos) - koeff[1][3];
+                tempV = *(vPos) - koeff[2][3];
+                *(bmpPos    ) = (uint8_t)clip((koeff[0][0] * tempY + koeff[0][1] * tempU + koeff[0][2] * tempV) >> 8);
+                *(bmpPos + 1) = (uint8_t)clip((koeff[1][0] * tempY + koeff[1][1] * tempU + koeff[1][2] * tempV) >> 8);
+                *(bmpPos + 2) = (uint8_t)clip((koeff[2][0] * tempY + koeff[2][1] * tempU + koeff[2][2] * tempV) >> 8);
+                *(bmpPos + 3) = 0;
+                tempY = *(yPos + yStride) - koeff[0][3];
+                *(bmpPos + bmpStride    ) = (uint8_t)clip((koeff[0][0] * tempY + koeff[0][1] * tempU + koeff[0][2] * tempV) >> 8);
+                *(bmpPos + bmpStride + 1) = (uint8_t)clip((koeff[1][0] * tempY + koeff[1][1] * tempU + koeff[1][2] * tempV) >> 8);
+                *(bmpPos + bmpStride + 2) = (uint8_t)clip((koeff[2][0] * tempY + koeff[2][1] * tempU + koeff[2][2] * tempV) >> 8);
+				*(bmpPos + bmpStride + 3) = 0;
+				bmpPos += 4;
+				yPos++;
+
+                tempY = *(yPos) - koeff[0][3];
+                *(bmpPos    ) = (uint8_t)clip((koeff[0][0] * tempY + koeff[0][1] * tempU + koeff[0][2] * tempV) >> 8);
+                *(bmpPos + 1) = (uint8_t)clip((koeff[1][0] * tempY + koeff[1][1] * tempU + koeff[1][2] * tempV) >> 8);
+                *(bmpPos + 2) = (uint8_t)clip((koeff[2][0] * tempY + koeff[2][1] * tempU + koeff[2][2] * tempV) >> 8);
+				*(bmpPos + 3) = 0;
+                tempY = *(yPos + yStride) - koeff[0][3];
+                *(bmpPos + bmpStride    ) = (uint8_t)clip((koeff[0][0] * tempY + koeff[0][1] * tempU + koeff[0][2] * tempV) >> 8);
+                *(bmpPos + bmpStride + 1) = (uint8_t)clip((koeff[1][0] * tempY + koeff[1][1] * tempU + koeff[1][2] * tempV) >> 8);
+                *(bmpPos + bmpStride + 2) = (uint8_t)clip((koeff[2][0] * tempY + koeff[2][1] * tempU + koeff[2][2] * tempV) >> 8);
+				*(bmpPos + bmpStride + 3) = 0;
+				bmpPos += 4;
+				yPos++;
+				uPos++;
+				vPos++;
+			}
+			yPos += yStride;
+			bmpPos += bmpStride;
+		}
+	}
+
+	void YUYV422ToRGB_STD(uint8_t *frame, uint8_t *bmp, const int16_t koeff[][4], const uint32_t width, const uint32_t height, const uint32_t startLine, const uint32_t linesCount) {
+
 	}
 
 }

@@ -1,19 +1,71 @@
 #ifndef YUV_FORMATS_H
 #define YUV_FORMATS_H
-#include "YUVTypes.hpp"
+
+#include <cstdint>
 
 namespace YUVLib {
 
-	enum YUVFormats {
-		UNKNOW = 0,
-		YUV420,
-		YUYV422			//YUY2
+	enum YUVFormat {
+		YUV_FORMAT_UNKNOWN = 0,
+		YUV_FORMAT_YUV420,
+		YUV_FORMAT_YUYV422
 	};
 
-	uint32 GetBitsCount (const YUVFormats format);
-	uint32 GetYBitsCount(const YUVFormats format);
-	uint32 GetUBitsCount(const YUVFormats format);
-	uint32 GetVBitsCount(const YUVFormats format);
+	static uint32_t GetBitsCount(const YUVFormat format) {
+		switch (format) {
+		case YUV_FORMAT_YUV420:
+			return 12;
+			break;
+		case YUV_FORMAT_YUYV422:
+			return 16;
+			break;
+		case YUV_FORMAT_UNKNOWN:
+		default:
+			return 0;
+		}
+	}
+
+	static uint32_t GetYBitsCount(const YUVFormat format) {
+		switch (format) {
+		case YUV_FORMAT_YUV420:
+			return 8;
+			break;
+		case YUV_FORMAT_YUYV422:
+			return 8;
+			break;
+		case YUV_FORMAT_UNKNOWN:
+		default:
+			return 0;
+		}
+	}
+
+	static uint32_t GetUBitsCount(const YUVFormat format) {
+		switch (format) {
+		case YUV_FORMAT_YUV420:
+			return 2;
+			break;
+		case YUV_FORMAT_YUYV422:
+			return 2;
+			break;
+		case YUV_FORMAT_UNKNOWN:
+		default:
+			return 0;
+		}
+	}
+
+	static uint32_t GetVBitsCount(const YUVFormat format) {
+		switch (format) {
+		case YUV_FORMAT_YUV420:
+			return 2;
+			break;
+		case YUV_FORMAT_YUYV422:
+			return 2;
+			break;
+		case YUV_FORMAT_UNKNOWN:
+		default:
+			return 0;
+		}
+	}
 
 }
 

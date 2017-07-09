@@ -8,14 +8,11 @@ namespace YUVLib {
 
 	class YUVWriter {
 	private:
-		/*uint32 m_width;
-		uint32 m_height;
-		YUVFormats m_format;*/
-		std::ofstream stream;
+		std::ofstream m_stream;
 	public:
-		YUVWriter()/* : m_width(0), m_height(0), m_format(YUVFormats::UNKNOW)*/ {};
+		YUVWriter() {};
 		~YUVWriter();
-		bool Open(const char *file/*, const uint32 width, const uint32 height, const YUVFormats format = YUVFormats::YUV420*/);
+		bool Open(const char *file);
 		void Close();
 		YUVWriter &operator << (const YUVFrame *frame);
 	};

@@ -7,6 +7,9 @@
 #include "YUVReader.hpp"
 #include "YUVWriter.hpp"
 
+#include "Frames/YUV420Frame.hpp"
+#include "Frames/YUYV422Frame.hpp"
+
 namespace YUVLib {
 
 }
