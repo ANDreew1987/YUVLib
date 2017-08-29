@@ -13,8 +13,8 @@ endif()
 
 add_subdirectory(YUVLib)
 add_subdirectory(Converter)
-add_subdirectory(Tests)
 add_subdirectory(Player)
 
 enable_testing()
-															 
+
+add_subdirectory(Tests)

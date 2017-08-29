@@ -11,23 +11,35 @@ include_directories(
 add_executable(Compare ${TEST_COMPARE_SOURCES})
 target_link_libraries(Compare YUVLib)
 
-enable_testing()
+set(TEST_COMPARE_FORMAT
+        yuv420
+)
 
-add_test(NAME Compare_yuv420_bt601_st_size_64_64   COMMAND Compare "yuv420" "bt601" "st"  "64"  "64")
-add_test(NAME Compare_yuv420_bt601_mt_size_64_64   COMMAND Compare "yuv420" "bt601" "mt"  "64"  "64")
+set(TEST_COMPARE_COLOR_SPACE
+        bt601
+        bt709
+)
 
-add_test(NAME Compare_yuv420_bt601_st_size_128_128 COMMAND Compare "yuv420" "bt601" "st" "128" "128")
-add_test(NAME Compare_yuv420_bt601_mt_size_128_128 COMMAND Compare "yuv420" "bt601" "mt" "128" "128")
+set(TEST_COMPARE_THREADING
+        st
+        mt
+)
 
-add_test(NAME Compare_yuv420_bt601_st_size_256_256 COMMAND Compare "yuv420" "bt601" "st" "256" "256")
-add_test(NAME Compare_yuv420_bt601_mt_size_256_256 COMMAND Compare "yuv420" "bt601" "mt" "256" "256")
+set(TEST_COMPARE_IMAGE_SIZE
+        64
+        128
+        256
+        512
+)
 
-add_test(NAME Compare_yuv420_bt709_st_size_64_64   COMMAND Compare "yuv420" "bt709" "st"  "64"  "64")
-add_test(NAME Compare_yuv420_bt709_mt_size_64_64   COMMAND Compare "yuv420" "bt709" "mt"  "64"  "64")
-
-add_test(NAME Compare_yuv420_bt709_st_size_128_128 COMMAND Compare "yuv420" "bt709" "st" "128" "128")
-add_test(NAME Compare_yuv420_bt709_mt_size_128_128 COMMAND Compare "yuv420" "bt709" "mt" "128" "128")
-
-add_test(NAME Compare_yuv420_bt709_st_size_256_256 COMMAND Compare "yuv420" "bt709" "st" "256" "256")
-add_test(NAME Compare_yuv420_bt709_mt_size_256_256 COMMAND Compare "yuv420" "bt709" "mt" "256" "256")
-
+foreach(FORMAT ${TEST_COMPARE_FORMAT})
+    foreach(COLOR_SPACE ${TEST_COMPARE_COLOR_SPACE})
+        foreach(THREADING ${TEST_COMPARE_THREADING})
+            foreach(IMAGE_SIZE ${TEST_COMPARE_IMAGE_SIZE})
+                add_test(NAME Compare_${FORMAT}_${COLOR_SPACE}_${THREADING}_${IMAGE_SIZE}_${IMAGE_SIZE}
+                         COMMAND Compare ${FORMAT} ${COLOR_SPACE} ${THREADING} ${IMAGE_SIZE} ${IMAGE_SIZE}
+                )
+            endforeach()
+        endforeach()
+    endforeach()
+endforeach()
